@@ -124,10 +124,10 @@ here I have shown only the relevant part. Notice the following lines
 0x080485ce <+106>:   cmp    DWORD PTR [ebp-0xc],0xcc07c9
 ```
 338150 in hex is 0x528E6. Required value of passcode1
-13371337 in hex is 0xcc07c9
+13371337 in hex is 0xcc07c9. Required value of passcode2
 Beautiful!
 
 So next thing that comes in mind is can we set the both values in login function using welcome function?
-Let's see `char[100]` started from `epb-0x88` and this 
+Let's see `char[100]` started from `epb-0x88` and passcode1 is at `ebp-0x10`.
 
 # solution
