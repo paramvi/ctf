@@ -82,7 +82,52 @@ Dump of assembler code for function welcome:
    0x0804862f <+38>:    lea    edx,[ebp-0x70]
 
 ```
-We see `sub    esp,0x88`. This should be ``char[
+We see `sub    esp,0x88`. This should be `char[100]`. Cool!
+Let's disassembly login function
+```
+(gdb) disas login
+Dump of assembler code for function login:
+   0x08048564 <+0>:     push   ebp
+   0x08048565 <+1>:     mov    ebp,esp
+   0x08048567 <+3>:     sub    esp,0x28
+   0x0804856a <+6>:     mov    eax,0x8048770
+   0x0804856f <+11>:    mov    DWORD PTR [esp],eax
+   0x08048572 <+14>:    call   0x8048420 <printf@plt>
+   0x08048577 <+19>:    mov    eax,0x8048783
+   0x0804857c <+24>:    mov    edx,DWORD PTR [ebp-0x10]
+   0x0804857f <+27>:    mov    DWORD PTR [esp+0x4],edx
+   0x08048583 <+31>:    mov    DWORD PTR [esp],eax
+   0x08048586 <+34>:    call   0x80484a0 <__isoc99_scanf@plt>
+   0x0804858b <+39>:    mov    eax,ds:0x804a02c
+   0x08048590 <+44>:    mov    DWORD PTR [esp],eax
+   0x08048593 <+47>:    call   0x8048430 <fflush@plt>
+   0x08048598 <+52>:    mov    eax,0x8048786
+   0x0804859d <+57>:    mov    DWORD PTR [esp],eax
+   0x080485a0 <+60>:    call   0x8048420 <printf@plt>
+   0x080485a5 <+65>:    mov    eax,0x8048783
+   0x080485aa <+70>:    mov    edx,DWORD PTR [ebp-0xc]
+   0x080485ad <+73>:    mov    DWORD PTR [esp+0x4],edx
+   0x080485b1 <+77>:    mov    DWORD PTR [esp],eax
+   0x080485b4 <+80>:    call   0x80484a0 <__isoc99_scanf@plt>
+   0x080485b9 <+85>:    mov    DWORD PTR [esp],0x8048799
+   0x080485c0 <+92>:    call   0x8048450 <puts@plt>
+   0x080485c5 <+97>:    cmp    DWORD PTR [ebp-0x10],0x528e6
+   0x080485cc <+104>:   jne    0x80485f1 <login+141>
+   0x080485ce <+106>:   cmp    DWORD PTR [ebp-0xc],0xcc07c9
 
+```
+here I have shown only the relevant part. Notice the following lines
+
+```
+0x080485c5 <+97>:    cmp    DWORD PTR [ebp-0x10],0x528e6
+0x080485cc <+104>:   jne    0x80485f1 <login+141>
+0x080485ce <+106>:   cmp    DWORD PTR [ebp-0xc],0xcc07c9
+```
+338150 in hex is 0x528E6. Required value of passcode1
+13371337 in hex is 0xcc07c9
+Beautiful!
+
+So next thing that comes in mind is can we set the both values in login function using welcome function?
+Let's see `char[100]` started from `epb-0x88` and this 
 
 # solution
