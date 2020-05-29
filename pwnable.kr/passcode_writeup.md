@@ -1,4 +1,4 @@
-#problem reqs
+# problem reqs
 when you login to machine
 
 ```
@@ -60,6 +60,6 @@ int main(){
 
 ```
 
-#thought process
+# thought process
 
-#solution
+# solution
