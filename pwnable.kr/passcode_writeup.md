@@ -61,5 +61,28 @@ int main(){
 ```
 
 # thought process
+clearly scanf is at fault here. Like `&` is missing and when you try to put integer to it, program crasshes. So we would have to find another way to put "junk" values in passcode1 and passcode2.
+
+We see that in the welcome function `char[100] name` asks for the input. It gives me the hunch that I could explore the buffer overflow route.
+
+Let's explore welcome function with gdb
+```
+(gdb) disas welcome
+Dump of assembler code for function welcome:
+   0x08048609 <+0>:     push   ebp
+   0x0804860a <+1>:     mov    ebp,esp
+   0x0804860c <+3>:     sub    esp,0x88
+   0x08048612 <+9>:     mov    eax,gs:0x14
+   0x08048618 <+15>:    mov    DWORD PTR [ebp-0xc],eax
+   0x0804861b <+18>:    xor    eax,eax
+   0x0804861d <+20>:    mov    eax,0x80487cb
+   0x08048622 <+25>:    mov    DWORD PTR [esp],eax
+   0x08048625 <+28>:    call   0x8048420 <printf@plt>
+   0x0804862a <+33>:    mov    eax,0x80487dd
+   0x0804862f <+38>:    lea    edx,[ebp-0x70]
+
+```
+We see `sub    esp,0x88`. This should be ``char[
+
 
 # solution
