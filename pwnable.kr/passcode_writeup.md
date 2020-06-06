@@ -79,10 +79,19 @@ Dump of assembler code for function welcome:
    0x08048622 <+25>:    mov    DWORD PTR [esp],eax
    0x08048625 <+28>:    call   0x8048420 <printf@plt>
    0x0804862a <+33>:    mov    eax,0x80487dd
-   0x0804862f <+38>:    lea    edx,[ebp-0x70]
+   **0x0804862f <+38>:  lea    edx,[ebp-0x70]**
+   0x08048632 <+41>:    mov    DWORD PTR [esp+0x4],edx
+   0x08048636 <+45>:    mov    DWORD PTR [esp],eax
+   0x08048639 <+48>:    call   0x80484a0 <__isoc99_scanf@plt>
+   0x0804863e <+53>:    mov    eax,0x80487e3
+   0x08048643 <+58>:    lea    edx,[ebp-0x70]
+   0x08048646 <+61>:    mov    DWORD PTR [esp+0x4],edx
+   0x0804864a <+65>:    mov    DWORD PTR [esp],eax
+   0x0804864d <+68>:    call   0x8048420 <printf@plt>
+   0x08048652 <+73>:    mov    eax,DWORD PTR [ebp-0xc]
 
 ```
-We see `sub    esp,0x88`. This should be `char[100]`. Cool!
+We see `lea    edx,[ebp-0x70]`. This should be `char[100]`. Cool!
 Let's disassembly login function
 ```
 (gdb) disas login
