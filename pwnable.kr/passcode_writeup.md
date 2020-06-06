@@ -79,7 +79,7 @@ Dump of assembler code for function welcome:
    0x08048622 <+25>:    mov    DWORD PTR [esp],eax
    0x08048625 <+28>:    call   0x8048420 <printf@plt>
    0x0804862a <+33>:    mov    eax,0x80487dd
-   **0x0804862f <+38>:  lea    edx,[ebp-0x70]**
+   0x0804862f <+38>:    lea    edx,[ebp-0x70]
    0x08048632 <+41>:    mov    DWORD PTR [esp+0x4],edx
    0x08048636 <+45>:    mov    DWORD PTR [esp],eax
    0x08048639 <+48>:    call   0x80484a0 <__isoc99_scanf@plt>
@@ -137,6 +137,23 @@ here I have shown only the relevant part. Notice the following lines
 Beautiful!
 
 So next thing that comes in mind is can we set the both values in login function using welcome function?
-Let's see `char[100]` started from `epb-0x88` and passcode1 is at `ebp-0x10`.
+Let's see `char[100]` started from `epb-0x70` and passcode1 is at `ebp-0x10`.
+
+if we check the difference between both of these 
+```
+(gdb) p/d 0x70-0x10
+$1 = 96
+
+```
+It's 96. 96 bytes. sweet. So seems like I can control the value of passcode1. But how do I control the value of passcode2??
+One point to note here is that in the original code `scanf("%100s", name);` only accepts 100 bytes only.
+hmmmm....
+
+Here I was out of my depths. So after researching on the internet, I found about GOT hijacking. GOT is global offset table. So basically when a C program is compiled into a binary, not all the functions are resolved. Especially the functions in shared libraries like printf, system(...), scanf() etc. It's linkers responsiblity to find them and once it finds them, then it places there address in the GOT. It works more like on-demand feature. When a function is required, linker will fetch it and place it's address in GOT and then if this function is required again, it'll be present there.
+If you didn't understand, what I am talking about I encourage you to read about it on wikipedia and other tons of articles and come back.
+Cool!
+
+How do we exploit this?
+If you note the scanf function of login function, we `&` is missing 
 
 # solution
