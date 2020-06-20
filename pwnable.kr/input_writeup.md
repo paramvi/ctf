@@ -95,3 +95,15 @@ Ok-- so we are ready for our input to clear stage 2. Here is the input:
 <echo-command>
   
  
+let' go to stage 3.
+
+here we have to set the env variable to clear this stage.
+
+Now here I tried following:
+- set env "\xde\xad\xbe\xef"="\xca\xfe\xba\xbe" && <input to clear stage 2>
+
+After this I was lost on how to pass the env variable using command line.
+
+Then after some googling, I found out that this problem was intended to be solved by writing the C wrapper or for that matter using any program. Wow!! I learnt something new here. Cool!
+
+Let's start
