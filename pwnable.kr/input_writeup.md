@@ -221,3 +221,156 @@ voila!
 
 #### stage5
 
+socket related. I didn't had a working knowledge of sockets till now.
+So went I through this tutorial: https://www.cs.rpi.edu/~moorthy/Courses/os98/Pgms/socket.html
+
+basically the idea is that if you are a server: 
+- you would create a socket
+- bind to that socket
+- listen on that socket
+- finally accept/receive/read() data on that socket.
+
+And if you are client:
+- create a socket
+- connect to that socket
+- send/write data to that socket.
+
+In the original function, stage5 is listening, so for our purposes it's a server and we'll be writing a client for it.
+
+```
+void stage5() {
+	int sd, cd;
+	struct sockaddr_in saddr, caddr;
+	sd = socket(AF_INET, SOCK_STREAM, 0);
+	if(sd == -1){
+		printf("socket error, tell admin\n");
+		exit(1);
+	}
+	
+	saddr.sin_family = AF_INET;
+	saddr.sin_addr.s_addr = INADDR_ANY;
+	saddr.sin_port = htons( atoi(args['C']));
+
+	while(connect(sd,(struct sockaddr *)&saddr,sizeof(saddr))<0);
+
+    char *buf = "\xde\xad\xbe\xef";
+
+    if (write(sd,buf,strlen(buf)) < 0)
+         perror("ERROR writing to socket");
+}
+```
+
+#### conclusion
+
+Add all the function together
+
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <string.h>
+
+#define PATH "/home/ubuntu/ctf/pwnable/input/input"
+
+void forkAndPipe(int *pipe2stdin, int *pipe2stderr, char **args);
+void main_main();
+void stage4();
+void stage5();
+void setArgs();
+
+char* args[101];
+
+int main() {
+	setArgs();
+	main_main();
+	stage4();
+	return 0;
+}
+
+void stage4() {
+	FILE *ptr = fopen("\x0a", "w");
+	if(ptr == NULL) {
+		perror("file not able to create");
+		exit(1);
+	}
+	fwrite("\x00\x00\x00\x00", 4, 1, ptr);
+
+    fclose(ptr);
+    
+}
+
+void setArgs() {
+	args[0]=PATH;
+	for (int i = 1; i < 100; ++i)
+		args[i]="0";
+
+	args['A']="\x00";
+	args['B']="\x20\x0a\x0d";
+	args['C']="9001";
+	args[100]=NULL;
+}
+
+void main_main() {
+	
+	int pipe2stdin[2], pipe2stderr[2];
+
+	if(pipe(pipe2stderr) < 0 || pipe(pipe2stdin) < 0) {
+		perror("can't create pipe");
+		exit(1);
+	}
+
+	forkAndPipe(pipe2stdin, pipe2stderr, args);
+}
+
+void forkAndPipe(int *pipe2stdin, int *pipe2stderr, char **args) {
+	pid_t c_pid; 
+	if((c_pid=fork()) == -1) {
+		perror("fork error");
+		exit(1);
+	}
+
+	char *envp[] = {
+		"\xde\xad\xbe\xef=\xca\xfe\xba\xbe",
+		0
+	};
+
+	if (c_pid == 0)
+	{
+		close(pipe2stdin[0]); close(pipe2stderr[0]);
+		write(pipe2stdin[1], "\x00\x0a\x00\xff", 4);
+		write(pipe2stderr[1], "\x00\x0a\x02\xff", 4);
+		stage5();
+		
+	} else {
+		// parent process 
+		close(pipe2stdin[1]); close(pipe2stderr[1]);
+		dup2(pipe2stdin[0], 0);
+		dup2(pipe2stderr[0], 2);
+		execve(PATH, args, envp);
+	}
+}
+
+void stage5() {
+	int sd, cd;
+	struct sockaddr_in saddr, caddr;
+	sd = socket(AF_INET, SOCK_STREAM, 0);
+	if(sd == -1){
+		printf("socket error, tell admin\n");
+		exit(1);
+	}
+	
+	saddr.sin_family = AF_INET;
+	saddr.sin_addr.s_addr = INADDR_ANY;
+	saddr.sin_port = htons( atoi(args['C']));
+
+	while(connect(sd,(struct sockaddr *)&saddr,sizeof(saddr))<0);
+
+    char *buf = "\xde\xad\xbe\xef";
+
+    if (write(sd,buf,strlen(buf)) < 0)
+         perror("ERROR writing to socket");
+}
+
+```
