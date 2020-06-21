@@ -137,9 +137,12 @@ Here we introduce `pipes`. Yes this is same as the `|` we use to pass the output
 - We'll be writing from child to parent. So close the write end of stdinpipe and stderrpipe in parent.And close the read end of both of these in child.
 - `dup2()` the read end of pipe to `fd=0`. Remember `fork` inherit the open file descriptors of it's parent process.
 
+For more information on pipes, read  http://unixwiz.net/techtips/remap-pipe-fds.html
+
 Code listing all the above principles
 
-```void main_main() {
+```
+void main_main() {
 	
 	int pipe2stdin[2], pipe2stderr[2];
 
@@ -182,4 +185,39 @@ void forkAndPipe(int *pipe2stdin, int *pipe2stderr, char **args) {
 
 ```
 
-For more information on pipes, read  http://unixwiz.net/techtips/remap-pipe-fds.html
+gotcha!! stage 2
+
+#### stag3
+seems easy. could be done by passing the env in the argument of `execve()`. Let's just do that only
+
+```
+char *envp[] = {
+		"\xde\xad\xbe\xef=\xca\xfe\xba\xbe",
+		0
+	};
+	execve(PATH, args, envp);
+
+```
+
+#### stage4
+
+again just simple file operation. 
+
+```
+void stage4() {
+	FILE *ptr = fopen("\x0a", "w");
+	if(ptr == NULL) {
+		perror("file not able to create");
+		exit(1);
+	}
+	fwrite("\x00\x00\x00\x00", 4, 1, ptr);
+
+    fclose(ptr);
+    
+}
+```
+
+voila!
+
+#### stage5
+
