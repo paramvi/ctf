@@ -235,7 +235,7 @@ And if you are client:
 - connect to that socket
 - send/write data to that socket.
 
-In the original function, stage5 is listening, so for our purposes it's a server and we'll be writing a client for it.
+In the original function, stage5 is listening, so for our purposes it's a server and we'll be writing a client for it. Now remember client and server are generally two different processes. So we would also need to be calling the original server `input` from different process. Fortunately we already created fork for our stage 2 and we were putting data from child to parent. So we'll place our client code in child process and `execve()` in parent will spin up the server.
 
 ```
 void stage5() {
@@ -374,3 +374,13 @@ void stage5() {
 }
 
 ```
+
+Now if you login to the machine, and you try to create file you don't have the permissions. Head over to `/tmp/` and create a directory there. But the problem is that we don't have the `flag` and `input` file there. 
+
+Well worry not, we can create a soft symlink to original files. 
+
+`ln -s /home/input2/input input`
+
+`ln -s /home/input2/flag flag`
+
+and then run this program and get your flag
