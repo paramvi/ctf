@@ -1,4 +1,4 @@
-##problem reqs
+## problem reqs
 so when we log in, there are typicall three files - flag, input, input.c
 
 ```
@@ -107,3 +107,33 @@ After this I was lost on how to pass the env variable using command line.
 Then after some googling, I found out that this problem was intended to be solved by writing the C wrapper or for that matter using any program. Wow!! I learnt something new here. Cool!
 
 Let's start
+
+We'll use `execve()` in C to replace the current process with another process.
+
+#### stage1
+```
+void setArgs() {
+	args[0]=PATH;
+	for (int i = 1; i < 100; ++i)
+		args[i]="0";
+
+	args['A']="\x00";
+	args['B']="\x20\x0a\x0d";
+	args['C']="9001";
+	args[100]=NULL;
+}
+
+```
+
+eazy peazy!
+
+#### stag2
+here we would like the read from input/stderr of a process. I tried to write to `fd=0` and hoping that new process of `input` will read from `fd=0`. But then it dawned on me that both I am writing in one process and each process has their own `fd's`. So there ought to be some other way to write to stdin of `input` process.
+
+Here we introduce `pipes`. Yes this is same as the `|` we use to pass the output of one process as an input to other in terminal. Idea is the following:
+- create two pipes - stdinpipe, other stderrpipe. 
+- create a fork. Now there will be two processes of this wrapper.
+- We'll be writing from child to parent. So close the write end of stdinpipe and stderrpipe in parent.And close the read end of both of these in child.
+- `dup2()` the 
+
+For more information on pipes, read  http://unixwiz.net/techtips/remap-pipe-fds.html
