@@ -128,12 +128,58 @@ void setArgs() {
 eazy peazy!
 
 #### stag2
-here we would like the read from input/stderr of a process. I tried to write to `fd=0` and hoping that new process of `input` will read from `fd=0`. But then it dawned on me that both I am writing in one process and each process has their own `fd's`. So there ought to be some other way to write to stdin of `input` process.
+here we would like the read from input/stderr of a process. I tried to write to `fd=0` and hoping that new process of `input` will read from `fd=0`. Well not a bad appoach, but if you read the man of `execve`, it says `Any open directory streams are closed`. Darn it!
+So there ought to be some other way to write to stdin of `input` process.
 
 Here we introduce `pipes`. Yes this is same as the `|` we use to pass the output of one process as an input to other in terminal. Idea is the following:
 - create two pipes - stdinpipe, other stderrpipe. 
 - create a fork. Now there will be two processes of this wrapper.
 - We'll be writing from child to parent. So close the write end of stdinpipe and stderrpipe in parent.And close the read end of both of these in child.
-- `dup2()` the 
+- `dup2()` the read end of pipe to `fd=0`. Remember `fork` inherit the open file descriptors of it's parent process.
+
+Code listing all the above principles
+
+```void main_main() {
+	
+	int pipe2stdin[2], pipe2stderr[2];
+
+	if(pipe(pipe2stderr) < 0 || pipe(pipe2stdin) < 0) {
+		perror("can't create pipe");
+		exit(1);
+	}
+
+	forkAndPipe(pipe2stdin, pipe2stderr, args);
+}
+
+void forkAndPipe(int *pipe2stdin, int *pipe2stderr, char **args) {
+	pid_t c_pid; 
+	if((c_pid=fork()) == -1) {
+		perror("fork error");
+		exit(1);
+	}
+
+	char *envp[] = {
+		"\xde\xad\xbe\xef=\xca\xfe\xba\xbe",
+		0
+	};
+
+	if (c_pid == 0)
+	{
+		close(pipe2stdin[0]); close(pipe2stderr[0]);
+		write(pipe2stdin[1], "\x00\x0a\x00\xff", 4);
+		write(pipe2stderr[1], "\x00\x0a\x02\xff", 4);
+		stage5();
+		
+	} else {
+		// parent process 
+		close(pipe2stdin[1]); close(pipe2stderr[1]);
+		dup2(pipe2stdin[0], 0);
+		dup2(pipe2stderr[0], 2);
+		execve(PATH, args, envp);
+	}
+}
+
+
+```
 
 For more information on pipes, read  http://unixwiz.net/techtips/remap-pipe-fds.html
